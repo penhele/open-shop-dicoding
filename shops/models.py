@@ -13,6 +13,5 @@ class Product(models.Model):
     category = models.CharField(max_length=100)
     stock = models.IntegerField()
     is_available = models.BooleanField(default=True)
+    is_delete = models.BooleanField(default=False)
     picture = models.URLField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)

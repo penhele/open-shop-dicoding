@@ -7,19 +7,29 @@ from .models import Product
 
 class ProductList(APIView):
     def post(self, request):
-        product = ProductSerializer(data=request.data, context={'request': request})  # Pass request context
+        product = ProductSerializer(data=request.data, context={'request': request}) 
         if product.is_valid(raise_exception=True):
             product.save()
             return Response(product.data, status=status.HTTP_201_CREATED)
         return Response(product.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-        name_query = request.GET.get('name', None)  # Mendapatkan query parameter 'name'
-        # products = Product.objects.filter(is_deleted=False)
-        products = Product.objects.all()
+        name_query = request.GET.get('name', None)
+        location_query = request.GET.get('location', None)
+
+        products = Product.objects.filter(is_delete=False)
 
         if name_query:
             products = products.filter(name__icontains=name_query)
+
+        if location_query:
+            products = products.filter(location__icontains=location_query)
+
+        if location_query:
+            product_names = products.values('name') 
+            return Response({
+                "products": list(product_names)
+            }, status=status.HTTP_200_OK)
 
         serializer = ProductSerializer(products, many=True)
         return Response({
@@ -52,6 +62,12 @@ class ProductDetail(APIView):
     # kriteria 4
     def delete(self, request, pk):
         product = self.get_object(pk)
-        product.is_deleted = True
-        product.delete()
+
+        if product.is_delete:
+            return Response({
+                "message": "Not found. This product is already soft deleted."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        product.is_delete = True
+        product.save()
         return Response({"message": "Product marked as deleted."}, status=status.HTTP_204_NO_CONTENT)
